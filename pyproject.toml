@@ -1,0 +1,102 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unified-qec"
+version = "0.1.0"
+description = "Consolidated Quantum Error Correction Framework"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Justin Arndt"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Core dependencies — required for all users
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "stim>=1.12",
+    "pymatching>=2.0",
+]
+
+[project.optional-dependencies]
+# Stim ↔ Cirq coherent noise bridge
+cirq = [
+    "cirq-core>=1.2",
+    "stimcirq>=0.1",
+]
+# HoloG differentiable calibration
+jax = [
+    "jax>=0.4",
+    "jaxlib>=0.4",
+]
+# GPU acceleration (CUDA)
+gpu = [
+    "jax[cuda12_pip]>=0.4",
+]
+# Gate Set Tomography
+gst = [
+    "pyGSTi>=0.9.12",
+]
+# BP+OSD decoder (ASR-MP)
+bposd = [
+    "ldpc>=2.0",
+    "sinter>=1.12",
+]
+# Union-Find decoder
+uf = [
+    "fusion-blossom>=0.1",
+    "sinter>=1.12",
+]
+# Development
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+    "mypy>=1.0",
+]
+# Everything
+all = [
+    "unified-qec[cirq,jax,gst,bposd,uf,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/justinlietz93/unified-qec"
+Repository = "https://github.com/justinlietz93/unified-qec"
+Issues = "https://github.com/justinlietz93/unified-qec/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_cirq: requires cirq and stimcirq",
+    "requires_jax: requires JAX",
+    "requires_ldpc: requires ldpc library",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
