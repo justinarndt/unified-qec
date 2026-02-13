@@ -51,6 +51,15 @@ class SyndromeFeedbackController:
         T1 relaxation time in microseconds.
     t2_us : float
         T2 dephasing time in microseconds.
+
+    Hardware Reference
+    ------------------
+    The ``latency_ns`` parameter models the physical feedback delay
+    measured in the FPGA Pauli frame tracking benchmark (``rtl/``).
+    The Apex LUTRAM tracker achieves single-cycle (<10 ns) updates
+    with zero stalls, while the BRAM baseline incurs 50% throughput
+    loss from synchronous read latency. See ``rtl/sim/benchmark_harness.sv``
+    for the full BRAM-vs-LUTRAM comparison.
     """
 
     def __init__(

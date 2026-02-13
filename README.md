@@ -138,6 +138,7 @@ src/unified_qec/
 └── experiments/       End-to-end pipeline demonstrations
 
 rtl/src/               FPGA Pauli frame trackers (SystemVerilog)
+rtl/sim/               BRAM-vs-LUTRAM benchmark harness
 ```
 
 ## Optional Dependencies
