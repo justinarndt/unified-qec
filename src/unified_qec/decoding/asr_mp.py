@@ -12,7 +12,6 @@ Migrated from: qec/src/asr_mp/decoder.py
 
 import numpy as np
 import stim
-from typing import Optional, Tuple, List
 
 try:
     import sinter

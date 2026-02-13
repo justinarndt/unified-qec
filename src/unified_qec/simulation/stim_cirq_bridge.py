@@ -11,8 +11,7 @@ Migrated from: stim-cirq-qec/src/adaptive_qec/hybrid/stim_cirq_bridge.py
 
 import stim
 import numpy as np
-from typing import Optional, Tuple, List, Dict
-from dataclasses import dataclass
+from typing import Optional, Tuple, List
 
 try:
     import cirq
@@ -251,7 +250,7 @@ class StimCirqBridge:
         # Parse DEM and scale error probabilities
         # This is a simplified version - full implementation would
         # parse each instruction and adjust probabilities
-        dem_str = str(dem)
+        _dem_str = str(dem)
 
         # For now, return original (full implementation would modify)
         return dem

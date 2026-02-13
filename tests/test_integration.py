@@ -5,7 +5,6 @@ These tests verify that all layers work together end-to-end.
 """
 
 import numpy as np
-import pytest
 
 
 class TestFullPipeline:
@@ -39,7 +38,6 @@ class TestFullPipeline:
 
     def test_simulation_to_decoding(self):
         """Generate circuit → extract DEM → decode."""
-        import stim
         from unified_qec.simulation.surface_code import SurfaceCodeCircuit, NoiseParameters
         from unified_qec.decoding.dem_utils import dem_to_matrices, get_channel_llrs
 
@@ -55,7 +53,7 @@ class TestFullPipeline:
         assert H.shape[0] > 0, "Should have detectors"
         assert L_obs.shape[0] > 0, "Should have observables"
         assert len(llrs) == len(priors)
-        assert all(l > 0 for l in llrs), "LLRs should be positive"
+        assert all(val > 0 for val in llrs), "LLRs should be positive"
 
     def test_feedback_loop(self):
         """Controller + decoder weights over multiple rounds."""
@@ -92,7 +90,7 @@ class TestFullPipeline:
         Ki = 0.05
         latency = 3
 
-        controller = SyndromeFeedbackController(Ki=Ki, feedback_latency=latency)
+        _controller = SyndromeFeedbackController(Ki=Ki, feedback_latency=latency)
         analyzer = FrequencyAnalyzer(Ki=Ki, latency_s=latency * 1e-6)
 
         margins = analyzer.compute_margins()

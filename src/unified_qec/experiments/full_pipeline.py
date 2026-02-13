@@ -12,9 +12,8 @@ Pipeline Steps:
 """
 
 import numpy as np
-from typing import Dict, Optional
+from typing import Dict
 
-from unified_qec.simulation.surface_code import SurfaceCodeCircuit
 from unified_qec.diagnostics.hamiltonian_learner import HamiltonianLearner
 from unified_qec.diagnostics.aubry_andre import AubryAndreModel
 from unified_qec.feedback.controller import SyndromeFeedbackController
@@ -141,7 +140,7 @@ def run_full_pipeline(
             corrections.append(correction)
 
             # Compute adaptive decoder weight
-            effective_p = weights.compute_weights(correction)
+            _effective_p = weights.compute_weights(correction)
 
     decay_penalty = controller.compute_latency_decay_penalty()
 

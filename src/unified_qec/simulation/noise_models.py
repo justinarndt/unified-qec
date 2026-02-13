@@ -12,7 +12,6 @@ Sources:
 
 import numpy as np
 import stim
-from typing import Optional, Tuple, List
 from dataclasses import dataclass
 
 

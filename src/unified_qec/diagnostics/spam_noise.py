@@ -8,7 +8,7 @@ Migrated from: stim-cirq-qec/src/adaptive_qec/diagnostics/spam_noise.py
 """
 
 import numpy as np
-from typing import Optional, List, Dict
+from typing import Optional, List
 from dataclasses import dataclass
 
 

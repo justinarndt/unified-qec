@@ -10,7 +10,7 @@ Migrated from: HoloG/holog_diffg/physics.py
 """
 
 import numpy as np
-from unified_qec.calibration.config import JAX_AVAILABLE, GATE_TIME_US, X, Z, I
+from unified_qec.calibration.config import JAX_AVAILABLE, GATE_TIME_US, Z, II
 
 if JAX_AVAILABLE:
     import jax
@@ -100,7 +100,7 @@ def apply_crosstalk(
     ndarray
         Density matrix after ZZ interaction.
     """
-    ops = [I] * n_qubits
+    ops = [II] * n_qubits
     ops[q0] = Z
     ops[q1] = Z
     H_zz = zz_strength * kron_full(ops)

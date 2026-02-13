@@ -11,7 +11,7 @@ Migrated from: realtime-qec/realtime_qec/simulation/circuits.py
 import stim
 import pymatching
 import numpy as np
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional
 from dataclasses import dataclass
 
 

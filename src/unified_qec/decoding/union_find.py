@@ -12,7 +12,6 @@ Migrated from: qec/src/asr_mp/union_find_decoder.py
 
 import numpy as np
 import stim
-from typing import Optional
 
 try:
     import fusion_blossom

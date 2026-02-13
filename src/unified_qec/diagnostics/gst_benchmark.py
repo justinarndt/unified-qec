@@ -10,7 +10,7 @@ Migrated from: stim-cirq-qec/src/adaptive_qec/diagnostics/gst_benchmark.py
 """
 
 import numpy as np
-from typing import Tuple, Optional, Dict
+from typing import Dict
 
 try:
     import pygsti

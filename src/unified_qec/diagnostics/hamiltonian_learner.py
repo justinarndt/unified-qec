@@ -16,7 +16,7 @@ import numpy as np
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
 from scipy.optimize import minimize
-from typing import Tuple, Optional, Callable
+from typing import Tuple, Optional
 import warnings
 
 warnings.filterwarnings("ignore")

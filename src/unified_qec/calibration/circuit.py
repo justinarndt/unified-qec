@@ -57,8 +57,8 @@ def embed_gate(gate: np.ndarray, target: int, n_qubits: int) -> np.ndarray:
     ndarray, shape (2^n, 2^n)
         Full Hilbert space gate.
     """
-    from unified_qec.calibration.config import I
-    ops = [I] * n_qubits
+    from unified_qec.calibration.config import II
+    ops = [II] * n_qubits
     ops[target] = gate
     return kron_full(ops)
 
@@ -83,7 +83,7 @@ def embed_two_qubit_gate(
     ndarray, shape (2^n, 2^n)
         Full Hilbert space gate.
     """
-    from unified_qec.calibration.config import I
+    from unified_qec.calibration.config import II
     if abs(q1 - q0) != 1:
         raise ValueError("Two-qubit gate requires adjacent qubits in this implementation.")
 
@@ -94,6 +94,6 @@ def embed_two_qubit_gate(
             ops.append(gate)
             i += 2
         else:
-            ops.append(I)
+            ops.append(II)
             i += 1
     return kron_full(ops)

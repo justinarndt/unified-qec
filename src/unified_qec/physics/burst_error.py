@@ -13,7 +13,7 @@ Migrated from: stim-cirq-qec/src/adaptive_qec/physics/burst_detector.py
 """
 
 import numpy as np
-from typing import Optional, List, Tuple, Set
+from typing import Optional, List, Set
 from dataclasses import dataclass
 
 

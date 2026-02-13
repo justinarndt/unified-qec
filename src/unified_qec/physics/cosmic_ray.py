@@ -8,7 +8,7 @@ Migrated from: stim-cirq-qec/src/adaptive_qec/physics/cosmic_ray.py
 """
 
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Optional
 from dataclasses import dataclass
 
 

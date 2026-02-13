@@ -12,15 +12,14 @@ Migrated from: HoloG/holog_diffg/simulator.py
 """
 
 import numpy as np
-from unified_qec.calibration.config import JAX_AVAILABLE, I, P0, P1
+from unified_qec.calibration.config import JAX_AVAILABLE, P1
 
 if JAX_AVAILABLE:
-    import jax
     import jax.numpy as jnp
 else:
     jnp = np
 
-from unified_qec.calibration.circuit import kron_full, embed_gate
+from unified_qec.calibration.circuit import embed_gate
 from unified_qec.calibration.physics import rx, damping_channel, apply_crosstalk
 
 
