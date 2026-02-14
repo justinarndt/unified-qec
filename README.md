@@ -1,6 +1,6 @@
 # unified-qec
 
-A research-grade quantum error correction toolkit that consolidates simulation, decoding, diagnostics, feedback control, hardware physics modeling, pulse remediation, differentiable calibration, and FPGA control logic into one cohesive Python + SystemVerilog package.
+A research-grade quantum error correction toolkit that consolidates simulation, decoding, diagnostics, feedback control, hardware physics modeling, pulse remediation, differentiable calibration, neural decoding, versioned model distribution, cloud-native data storage, and FPGA control logic into one cohesive Python + SystemVerilog package.
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -24,13 +24,15 @@ The core pipeline: **Diagnose → Control → Remediate → Validate**
 graph TD
     subgraph "unified-qec"
         SIM["simulation<br/>Circuit generation, noise models,<br/>Stim + Cirq bridge"]
-        DEC["decoding<br/>BP+OSD (ASR-MP), Union-Find,<br/>DEM utilities"]
+        DEC["decoding<br/>BP+OSD, Union-Find, PyMatching,<br/>Neural, Unified Sinter API"]
         DIAG["diagnostics<br/>Hamiltonian learning, GST,<br/>Aubry-André disorder"]
         FB["feedback<br/>Syndrome controller,<br/>adaptive decoder weights"]
         PHYS["physics<br/>Leakage, cosmic rays,<br/>burst errors"]
         REM["remediation<br/>Optimal control<br/>pulse synthesis"]
         CAL["calibration<br/>HoloG JAX density-matrix<br/>simulator"]
-        EXP["experiments<br/>End-to-end pipelines"]
+        ZOO["zoo<br/>Neural decoder, Orbax checkpoints,<br/>HuggingFace Hub distribution"]
+        DATA["data<br/>Zarr analytical store,<br/>WebDataset streaming archives"]
+        EXP["experiments<br/>End-to-end pipelines,<br/>Sinter benchmarks"]
     end
 
     subgraph "rtl/"
@@ -40,9 +42,12 @@ graph TD
     DIAG -->|diagnosed Hamiltonian| REM
     DIAG -->|defect map| FB
     SIM -->|circuits| DEC
+    SIM -->|sampling| DATA
     FB -->|weight updates| DEC
     CAL -->|calibrated pulses| SIM
     PHYS -->|noise injection| SIM
+    ZOO -->|trained models| DEC
+    DATA -->|training data| ZOO
     EXP -->|orchestrates| SIM & DEC & DIAG & FB & REM
 
     style SIM fill:#1a73e8,color:#fff
@@ -52,6 +57,8 @@ graph TD
     style PHYS fill:#d93025,color:#fff
     style REM fill:#185abc,color:#fff
     style CAL fill:#b31412,color:#fff
+    style ZOO fill:#ea8600,color:#fff
+    style DATA fill:#00897b,color:#fff
     style EXP fill:#137333,color:#fff
     style RTL fill:#455a64,color:#fff
 ```
@@ -81,10 +88,11 @@ Stim-based surface code circuit generation with physically realistic noise chann
 
 ### `decoding/` — Syndrome Decoding
 
-Two decoder backends with full [sinter](https://github.com/quantumlib/Stim/tree/main/glue/sinter) integration for Monte Carlo threshold estimation.
+Four decoder backends with a unified [sinter](https://github.com/quantumlib/Stim/tree/main/glue/sinter) API for Monte Carlo threshold estimation.
 
 | Class / Function | Description |
 |---|---|
+| `UnifiedQECDecoder` | **Section 7 unified decoder factory.** Pickle-safe `sinter.Decoder` that routes to any of 4 backends (`bposd`, `uf`, `pymatching`, `neural`) via a single interface. Drop-in replacement for `sinter.collect(decoder=...)`. |
 | `ASRMPDecoder` | **Primary decoder.** Belief Propagation + Ordered Statistics Decoding (BP+OSD) via the `ldpc` library. Configurable BP method (`product_sum` / `min_sum`), OSD order, and max iterations. Converts DEM→sparse matrices automatically. |
 | `TesseractBPOSD` | Sinter-compatible decoder factory implementing the `sinter.Decoder` interface for parallelized Monte Carlo sampling. |
 | `TesseractCompiledDecoder` | Compiled decoder implementing `sinter.CompiledDecoder` with bit-packed shot decoding. |
@@ -154,6 +162,35 @@ JAX-based density-matrix simulator for gradient-descent calibration of plaquette
 
 ---
 
+### `zoo/` — Model Zoo (Section 7)
+
+Versioned model artifacts: neural decoders, Orbax checkpointing, and HuggingFace Hub distribution.
+
+| Class / Function | Description |
+|---|---|
+| `NeuralSyndromeDecoder` | Transformer-based neural syndrome decoder (JAX/Flax). 4-layer, 8-head, 256-dim architecture with residual connections, layer norm, and GELU activations. Includes `predict()` with JIT-compiled inference. |
+| `create_train_state()` | Initializes a Flax `TrainState` with AdamW optimizer for neural decoder training. |
+| `train_step()` | Single gradient step with sigmoid binary cross-entropy loss. |
+| `generate_training_data()` | Samples syndrome/observable pairs from a Stim circuit for neural decoder training. |
+| `ModelCheckpoint` | Orbax-based checkpoint manager with composite saves (model PyTree + JSON metadata), retention policies, metadata-only restore, and `best_step()` metric search. |
+| `NumpyCheckpoint` | Lightweight `.npz`-based checkpoint manager for non-JAX users. Retention policies and JSON metadata sidecars. |
+| `ZooManager` | HuggingFace Hub integration: `push()`, `pull()`, `pull_snapshot()`, `list_revisions()`, and auto-generated Model Cards with YAML frontmatter. |
+
+---
+
+### `data/` — Open Data (Section 7)
+
+Cloud-native storage for QEC syndrome datasets.
+
+| Class / Function | Description |
+|---|---|
+| `ZarrStore` | Chunked, compressed Zarr arrays for syndrome data. Blosc/Zlib codecs, append support, selective slice reading, failure event filtering, and JSON metadata. Works with local paths or cloud URIs via fsspec. |
+| `WebDatasetWriter` | Writes syndrome data as sharded POSIX tar archives (`.syndrome.npy` + `.observable.npy` + `.json` per sample). Manifest output for reproducibility. |
+| `WebDatasetReader` | Streaming reader with in-memory shuffle buffer. Compatible with JAX/PyTorch data loaders. |
+| `SinterToData` | Bridges Sinter/Stim sampling output to Zarr and WebDataset formats. Batched I/O, auto-metadata extraction, and support for pre-sampled detection events. |
+
+---
+
 ### `experiments/` — End-to-End Pipelines
 
 Orchestration layer that connects all modules into complete workflows.
@@ -161,6 +198,7 @@ Orchestration layer that connects all modules into complete workflows.
 | Function | Description |
 |---|---|
 | `run_full_pipeline()` | Executes the complete **Diagnose → Control → Remediate → Validate** workflow: (1) Hamiltonian learning detects coupling defects, (2) syndrome feedback controller tracks drift, (3) pulse synthesizer generates corrective fields, (4) leakage tracker validates residual error. |
+| `benchmark_sinter` | CLI harness for Sinter Monte Carlo benchmarks across `(d, p)` grids. Outputs CSV results and threshold curve plots. Usage: `python -m unified_qec.experiments.benchmark_sinter --distances 3 5 7`. |
 
 ---
 
@@ -185,11 +223,13 @@ Both modules use `{Z, X}` 2-bit Pauli frame encoding, proper `rst_n` reset, `$cl
 pip install -e .
 
 # With specific extras
-pip install -e ".[jax]"       # HoloG differentiable calibration
+pip install -e ".[jax]"       # Differentiable calibration + neural decoder (JAX, Flax, Optax)
 pip install -e ".[cirq]"      # Stim-Cirq coherent noise bridge
 pip install -e ".[bposd]"     # BP+OSD decoder (ldpc + sinter)
 pip install -e ".[gst]"       # Gate Set Tomography (pyGSTi)
 pip install -e ".[uf]"        # Union-Find decoder (fusion-blossom)
+pip install -e ".[zoo]"       # Model Zoo (Orbax + HuggingFace Hub)
+pip install -e ".[data]"      # Open Data (Zarr + WebDataset)
 
 # Everything
 pip install -e ".[all]"
@@ -287,6 +327,44 @@ from unified_qec.experiments.full_pipeline import run_full_pipeline
 results = run_full_pipeline(code_distance=5, verbose=True)
 ```
 
+### Run a Sinter benchmark
+
+```python
+from unified_qec.decoding import UnifiedQECDecoder
+import sinter, stim
+
+tasks = [
+    sinter.Task(
+        circuit=stim.Circuit.generated(
+            "surface_code:rotated_memory_z", distance=d, rounds=d,
+            after_clifford_depolarization=p,
+        ),
+        decoder=UnifiedQECDecoder(backend="pymatching"),
+        json_metadata={"d": d, "p": p},
+    )
+    for d in [3, 5, 7] for p in [0.001, 0.005, 0.01]
+]
+stats = sinter.collect(tasks=tasks, num_workers=4, max_shots=10000)
+```
+
+### Save syndrome data to Zarr (requires `[data]`)
+
+```python
+from unified_qec.data import SinterToData
+import stim
+
+circuit = stim.Circuit.generated(
+    "surface_code:rotated_memory_z", distance=5, rounds=5,
+    after_clifford_depolarization=0.005,
+)
+converter = SinterToData()
+result = converter.from_stim_samples(
+    circuit, num_shots=100_000, output_path="./datasets/d5_p005",
+    formats=["zarr", "webdataset"],
+)
+print(result)  # paths and shot counts
+```
+
 ## Package Layout
 
 ```
@@ -295,10 +373,19 @@ src/unified_qec/
 │   ├── surface_code.py          SurfaceCodeCircuit, DriftingNoiseModel
 │   ├── noise_models.py          CoherentNoiseModel, SPAMNoiseModel, stress circuits
 │   └── stim_cirq_bridge.py      StimCirqBridge, CoherentNoiseInjector
-├── decoding/          BP+OSD (ASR-MP), Union-Find, DEM utilities
+├── decoding/          BP+OSD (ASR-MP), Union-Find, Unified Sinter API
+│   ├── sinter_api.py            UnifiedQECDecoder (4-backend sinter factory)
 │   ├── asr_mp.py                ASRMPDecoder, TesseractBPOSD (sinter)
 │   ├── union_find.py            UnionFindDecoder (fusion-blossom)
 │   └── dem_utils.py             DEM→matrix conversion, LLR computation
+├── zoo/               Model Zoo — neural decoders + versioned checkpoints
+│   ├── neural_decoder.py        NeuralSyndromeDecoder (Transformer, JAX/Flax)
+│   ├── checkpoint.py            ModelCheckpoint (Orbax), NumpyCheckpoint
+│   └── hub.py                   ZooManager (HuggingFace Hub push/pull)
+├── data/              Open Data — cloud-native syndrome storage
+│   ├── zarr_store.py            ZarrStore (chunked, compressed arrays)
+│   ├── webdataset_writer.py     WebDatasetWriter/Reader (sharded tar)
+│   └── converters.py            SinterToData (Stim → Zarr/WebDataset)
 ├── diagnostics/       Hamiltonian learning, Aubry-André, GST, SPAM
 │   ├── hamiltonian_learner.py   HamiltonianLearner (inverse problem solver)
 │   ├── aubry_andre.py           AubryAndreModel (MBL disorder generator)
@@ -319,8 +406,9 @@ src/unified_qec/
 │   ├── config.py                Physical constants, Pauli operators
 │   ├── physics.py               Crosstalk and decoherence channels
 │   └── circuit.py               Gate embedding utilities
-└── experiments/       End-to-end pipeline demonstrations
-    └── full_pipeline.py         Diagnose → Control → Remediate → Validate
+└── experiments/       End-to-end pipelines + Sinter benchmarks
+    ├── full_pipeline.py         Diagnose → Control → Remediate → Validate
+    └── benchmark_sinter.py      CLI Monte Carlo benchmark harness
 
 rtl/
 ├── src/
@@ -335,10 +423,12 @@ rtl/
 | Extra | Enables | Library |
 |---|---|---|
 | `[cirq]` | Coherent noise simulation | cirq-core, stimcirq |
-| `[jax]` | Differentiable calibration | jax, jaxlib |
+| `[jax]` | Differentiable calibration + neural decoder | jax, jaxlib, flax, optax |
 | `[gst]` | Gate Set Tomography | pyGSTi |
 | `[bposd]` | BP+OSD decoder | ldpc, sinter |
 | `[uf]` | Union-Find decoder | fusion-blossom, sinter |
+| `[zoo]` | Model Zoo (checkpointing + distribution) | orbax-checkpoint, huggingface-hub |
+| `[data]` | Open Data (cloud-native storage) | zarr, webdataset, fsspec |
 | `[dev]` | Testing & linting | pytest, ruff, mypy |
 
 ## Testing
