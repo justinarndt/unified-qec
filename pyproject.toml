@@ -38,10 +38,12 @@ cirq = [
     "cirq-core>=1.2",
     "stimcirq>=0.1",
 ]
-# HoloG differentiable calibration
+# HoloG differentiable calibration + neural decoder
 jax = [
     "jax>=0.4",
     "jaxlib>=0.4",
+    "flax>=0.8",
+    "optax>=0.2",
 ]
 # GPU acceleration (CUDA)
 gpu = [
@@ -68,9 +70,26 @@ dev = [
     "ruff>=0.1",
     "mypy>=1.0",
 ]
+# Model Zoo (Orbax + HuggingFace Hub)
+zoo = [
+    "orbax-checkpoint>=0.5",
+    "huggingface-hub>=0.20",
+    "jinja2>=3.0",
+]
+# Open Data (Zarr + WebDataset)
+data = [
+    "zarr>=2.16",
+    "webdataset>=0.2",
+    "fsspec>=2023.1",
+]
+# Documentation
+docs = [
+    "jupyter-book>=1.0",
+    "sphinx-autodoc-typehints",
+]
 # Everything
 all = [
-    "unified-qec[cirq,jax,gst,bposd,uf,dev]",
+    "unified-qec[cirq,jax,gst,bposd,uf,zoo,data,dev]",
 ]
 
 [project.urls]

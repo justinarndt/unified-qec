@@ -255,3 +255,19 @@ class TesseractBPOSD:
         compiled = self.compile_decoder_for_dem(dem)
         result = compiled.decode_shots_bit_packed(dets_b8)
         obs_predictions_b8[:] = result
+
+    def __getstate__(self):
+        """Return pickle-safe state (primitives only)."""
+        return {
+            "max_iter": self.max_iter,
+            "bp_method": self.bp_method,
+            "osd_method": self.osd_method,
+            "osd_order": self.osd_order,
+        }
+
+    def __setstate__(self, state):
+        """Restore from pickled state."""
+        self.max_iter = state["max_iter"]
+        self.bp_method = state["bp_method"]
+        self.osd_method = state["osd_method"]
+        self.osd_order = state["osd_order"]
